@@ -143,10 +143,28 @@ POWER_TEXT = {
     "LONG COUNT": "Double your single best-scoring task.",
 }
 
-SCORE_TASK = 10
+SCORE_TASK = 10             # the floor: a short task
 SCORE_RACE_BONUS = 5
 SCORE_ACCUSE = 25
 SCORE_MOLE_SURVIVES = 25
+SCORE_LATE = 5              # docked for logging after the task clock ran out
+
+# A five minute ordeal used to be worth exactly what a ninety second photograph
+# was worth, so there was no reason to take the hard disc. Pay by the clock.
+SCORE_STEPS = [(120, 10), (180, 15)]
+SCORE_LONG = 20
+
+
+def score_for(seconds):
+    """What a task is worth, by how long it was given."""
+    try:
+        seconds = int(seconds)
+    except (TypeError, ValueError):
+        return SCORE_TASK
+    for limit, points in SCORE_STEPS:
+        if seconds <= limit:
+            return points
+    return SCORE_LONG
 
 
 def lan_ip():
@@ -346,6 +364,8 @@ class Game(object):
         self.spent = []
         self.accusations = {}
         self.reel_index = 0
+        self.votes = {}          # log row id -> {player name: True/False}
+        self.voters = {}         # phone token -> the player holding that phone
         self.tray = None
         self.pending = None
         # One running task per TEAM. It used to be one for the whole house, which
@@ -372,6 +392,7 @@ class Game(object):
         self.codes = {"A": a, "B": b}
         self.tokens = {}
         self.seen = {}
+        self.voters = {}
 
     def join(self, code):
         """A phone trades the team passcode for a token. Returns (token, team)."""
@@ -425,7 +446,42 @@ class Game(object):
                 "discs_total": len(self.order),
                 "totals": totals,
                 "logged": sum(1 for r in self.log if r["team"] == team),
+                "me": self.voters.get(token or ""),
+                "roster": [p["name"] for p in self.players if p["team"] == team],
+                # names already in somebody's hand, so a second phone does not
+                # offer them and then refuse
+                "taken": [n for t, n in self.voters.items()
+                          if t != token and self.tokens.get(t) == team],
+                "reel": self.reel_for_phone(token),
             }
+
+    def reel_for_phone(self, token):
+        """What a phone needs to vote: the photograph the room is looking at, and
+        this player's own vote on it. Never anybody else's."""
+        if self.phase != "reel" or self.reel_index >= len(self.log):
+            return None
+        row = self.log[self.reel_index]
+        name = self.voters.get(token or "")
+        v = self.votes.get(row["id"]) or {}
+        c = self.vote_count(row["id"])
+        return {
+            "i": self.reel_index,
+            "of": len(self.log),
+            "id": row["id"],
+            "team": row["team"],
+            "disc": row["disc"],
+            "text": row["text"],
+            "photo": row["photo"],
+            "note": row["note"],
+            "late": row["late"],
+            "power": row["power"],
+            "race": bool(row.get("race")),
+            "hijack_of": row.get("hijack_of"),
+            "worth": score_for(row.get("seconds")),
+            "mine": v.get(name) if name in v else None,
+            "in": c["in"],
+            "expected": c["of"],
+        }
 
     # -- setup ----------------------------------------------------
 
@@ -561,6 +617,8 @@ class Game(object):
         self.spent = []
         self.accusations = {}
         self.reel_index = 0
+        self.votes = {}
+        self.voters = {}
         self.active = {"A": None, "B": None}
         self.hijacks = {"A": 0, "B": 0}
         self.scratches = {"A": 0, "B": 0}   # SCRATCH powers held
@@ -743,9 +801,33 @@ class Game(object):
                 "ends_at": loads_until + disc["task"]["seconds"],
                 "contest": None,        # set when a HIJACK turns this into a race
                 "hijack_of": None,      # set on the hijacking team's copy
+                "race": False,          # set on both copies of a real race
+                "race_from": None,      # the team whose disc started it
             }
             self.message = ("Team %s's disc is scratched - loading for %d seconds."
                             % (team, SCRATCH_SECONDS)) if loads_until > now else ""
+
+            # A race task used to go to whichever team happened to find the disc,
+            # which meant nobody ever raced anybody and the bonus was free. Deal
+            # it to both teams at once instead, on their own clocks.
+            other = "B" if team == "A" else "A"
+            if disc["task"]["judged"] == "race" and not self.active.get(other):
+                contest = "r%d" % int(time.time() * 1000)
+                self.active[team]["contest"] = contest
+                self.active[team]["race"] = True
+                self.active[team]["race_from"] = team
+                self.active[other] = dict(
+                    self.active[team],
+                    team=other,
+                    loads_until=now,                 # their clock is their own
+                    ends_at=now + disc["task"]["seconds"],
+                )
+                self.message = ("Team %s claimed a RACE - Team %s is in it too. "
+                                "First photograph the room accepts takes the bonus."
+                                % (team, other))
+            elif disc["task"]["judged"] == "race":
+                self.message = ("Team %s claimed a race task, but Team %s is already busy - "
+                                "no race, no bonus." % (team, other))
 
     def task_view(self, team):
         a = self.active.get(team)
@@ -836,10 +918,12 @@ class Game(object):
             self.log.append({
                 "contest": act["contest"],
                 "hijack_of": act["hijack_of"],
+                "race": bool(act.get("race")),
                 "id": len(self.log),
                 "team": act["team"],
                 "disc": act["disc_name"],
                 "text": act["task"]["text"],
+                "seconds": act["task"]["seconds"],   # what it is worth is set by this
                 "judged": act["task"]["judged"],
                 "power": act["task"]["power"],
                 "author": act["task"]["author"],
@@ -861,9 +945,14 @@ class Game(object):
             other = "B" if team == "A" else "A"
             still_racing = self.active.get(other) and self.active[other]["contest"] \
                 and self.active[other]["contest"] == act["contest"]
-            if act["hijack_of"] or still_racing:
-                # the other team is still on this task, so the disc stays used up
-                self.message = "Team %s gave up. Team %s is still on it." % (team, other)
+            borrowed = bool(act["hijack_of"]) or (act.get("race")
+                                                  and act.get("race_from") != team)
+            # if anyone in this contest already logged it, the disc has been played
+            logged = bool(act["contest"]) and any(r.get("contest") == act["contest"]
+                                                  for r in self.log)
+            if borrowed or still_racing or logged:
+                # somebody else is still on this task, or already did it
+                self.message = "Team %s gave up. That disc stays used." % team
             else:
                 self.deck[act["fingerprint"]]["claimed_by"] = None
                 self.message = "Task abandoned. That disc is back in play."
@@ -893,39 +982,166 @@ class Game(object):
         with self.lock:
             self.phase = "reel"
             self.reel_index = 0
+            self.message = ""
             self.active = {"A": None, "B": None}
             self.pending = None
             if not self.log:
                 self.phase = "powers"
 
-    def judge(self, verdict):
+    def voters_expected(self):
+        """Everyone entitled to judge. The host is not a player and does not vote -
+        they hid the discs and know too much."""
+        return [p["name"] for p in self.players]
+
+    def claim_seat(self, token, name):
         with self.lock:
+            return self._claim_seat(token, name)
+
+    def _claim_seat(self, token, name):
+        """A phone says who is holding it, so its votes have a name on them.
+        A name can only be held by one phone at a time - otherwise a second
+        handset could vote twice, or vote as somebody else."""
+        team = self.team_of(token)
+        if not team:
+            return "expired"
+        name = " ".join((name or "").split())
+        who = None
+        for p in self.players:
+            if p["name"] == name:
+                who = p
+        if not who:
+            return "No player called that."
+        if who["team"] != team:
+            return "%s is not on team %s." % (name, team)
+        for tok, held in self.voters.items():
+            if held == name and tok != token:
+                return "Someone is already voting as %s." % name
+        self.voters[token] = name
+        return None
+
+    def vote(self, token, row_id, yes):
+        """One player, one photograph. You may change your mind until it closes."""
+        with self.lock:
+            if self.phase != "reel":
+                return "The reel is not running."
+            name = self.voters.get(token or "")
+            if not name:
+                return "Say who you are first."
             if self.reel_index >= len(self.log):
+                return "Nothing to judge."
+            row = self.log[self.reel_index]
+            if row_id is not None and int(row_id) != row["id"]:
+                return "That photograph has gone by."
+            self.votes.setdefault(row["id"], {})[name] = bool(yes)
+            if len(self.votes[row["id"]]) >= len(self.voters_expected()):
+                self.close_vote()
+            return None
+
+    def vote_count(self, row_id):
+        """Numbers only. No name goes on the shared screen until the record."""
+        v = self.votes.get(row_id) or {}
+        yes = sum(1 for b in v.values() if b)
+        return {"yes": yes, "no": len(v) - yes, "in": len(v),
+                "of": len(self.voters_expected())}
+
+    def close_vote(self):
+        with self.lock:
+            if self.phase != "reel" or self.reel_index >= len(self.log):
                 return
             row = self.log[self.reel_index]
-            row["verdict"] = verdict
-            beaten = False
-            if verdict == "accept" and row.get("contest"):
-                # a hijacked task: the reel runs in logging order, so the first
-                # accepted photo in this contest is the one that got there first
-                beaten = any(r.get("contest") == row["contest"] and r["verdict"] == "accept"
-                             for r in self.log[:self.reel_index])
-            if verdict == "accept" and beaten:
-                row["score"] = 0
-                row["verdict"] = "beaten"
-            elif verdict == "accept":
-                row["score"] = SCORE_TASK
-                if row["judged"] == "race" and row["first"]:
-                    row["score"] += SCORE_RACE_BONUS
-                if row["late"]:
-                    row["score"] = max(0, row["score"] - 5)
-                if row["power"] and row["power"] not in PLAY_POWERS:   # those were held when logged
-                    self.powers[row["team"]].append(row["power"])
-            else:
-                row["score"] = 0
-            self.reel_index += 1
-            if self.reel_index >= len(self.log):
-                self.phase = "powers"
+            c = self.vote_count(row["id"])
+            if not c["in"]:
+                self.message = "Nobody has voted. Call it at the laptop."
+                return
+            if c["yes"] == c["no"]:
+                self.message = ("Tied %d-%d. The room has to settle this one out loud."
+                                % (c["yes"], c["no"]))
+                return
+            self._settle("accept" if c["yes"] > c["no"] else "reject")
+
+    def judge(self, verdict):
+        """The laptop calling it: no phones in the room, or a tie to break."""
+        with self.lock:
+            self._settle(verdict)
+
+    def _race_leader(self, row):
+        """The first accepted photograph in a race takes the bonus."""
+        return not any(r.get("contest") == row["contest"] and r["verdict"] == "accept"
+                       for r in self.log[:self.reel_index])
+
+    def _settle(self, verdict):
+        if self.reel_index >= len(self.log):
+            return
+        row = self.log[self.reel_index]
+        row["verdict"] = verdict
+        beaten = False
+        if verdict == "accept" and row.get("contest") and not row.get("race"):
+            # a hijacked task is one task two teams did, so only the first
+            # accepted photo scores. A race is two teams doing it separately -
+            # both count, and only the bonus is at stake.
+            beaten = any(r.get("contest") == row["contest"] and r["verdict"] == "accept"
+                         for r in self.log[:self.reel_index])
+        if verdict == "accept" and beaten:
+            row["score"] = 0
+            row["verdict"] = "beaten"
+        elif verdict == "accept":
+            row["score"] = score_for(row.get("seconds"))
+            # a race task claimed while the other team was busy is just a task:
+            # there was no race to win, so there is no bonus to take
+            if row.get("race") and row.get("contest") and self._race_leader(row):
+                row["score"] += SCORE_RACE_BONUS
+            if row["late"]:
+                row["score"] = max(0, row["score"] - SCORE_LATE)
+            if row["power"] and row["power"] not in PLAY_POWERS:   # those were held when logged
+                self.powers[row["team"]].append(row["power"])
+        else:
+            row["score"] = 0
+        self.reel_index += 1
+        if self.reel_index >= len(self.log):
+            # the record only means anything if the room actually voted
+            self.phase = "record" if any(self.votes.values()) else "powers"
+
+    def record(self):
+        """Who stood where on the photographs the room disagreed about.
+
+        Unanimous votes say nothing about anybody, so they are left out. What is
+        left is the only trail a Mole leaves - and honest people disagree about
+        the ambiguous ones too, which is what keeps it an argument, not proof."""
+        team_of = dict((p["name"], p["team"]) for p in self.players)
+        counts = dict((n, {"name": n, "team": t, "against_own": 0,
+                           "for_theirs": 0, "voted": 0})
+                      for n, t in team_of.items())
+        rows = []
+        judged = 0
+        for row in self.log:
+            v = self.votes.get(row["id"]) or {}
+            if not v:
+                continue
+            judged += 1
+            for name in v:
+                if name in counts:
+                    counts[name]["voted"] += 1
+            yes = sorted([n for n, b in v.items() if b])
+            no = sorted([n for n, b in v.items() if not b])
+            if not yes or not no:
+                continue
+            rows.append({"id": row["id"], "team": row["team"], "disc": row["disc"],
+                         "text": row["text"], "verdict": row["verdict"],
+                         "photo": row["photo"], "yes": yes, "no": no})
+            for name, b in v.items():
+                if name not in counts:
+                    continue
+                if team_of[name] == row["team"] and not b:
+                    counts[name]["against_own"] += 1
+                elif team_of[name] != row["team"] and b:
+                    counts[name]["for_theirs"] += 1
+        people = sorted(counts.values(),
+                        key=lambda c: (-c["against_own"], -c["for_theirs"], c["name"]))
+        return {"rows": rows, "people": people, "judged": judged, "split": len(rows)}
+
+    def to_powers(self):
+        with self.lock:
+            self.phase = "powers"
 
     def use_power(self, team, power, target):
         with self.lock:
@@ -952,7 +1168,7 @@ class Game(object):
             elif power == "TESTIMONY":
                 for row in self.log:
                     if row["id"] == target:
-                        row["score"] = SCORE_TASK
+                        row["score"] = score_for(row.get("seconds"))
                         row["verdict"] = "accept"
                         record["detail"] = "Restored: " + row["text"]
 
@@ -1058,6 +1274,12 @@ class Game(object):
                 "slowed": self.slowed,
                 "log": self.log,
                 "reel_index": self.reel_index,
+                # counts only - names would hand the room the Mole on photo one
+                "vote": (self.vote_count(self.log[self.reel_index]["id"])
+                         if self.phase == "reel" and self.reel_index < len(self.log)
+                         else None),
+                "seated": len(self.voters),
+                "record": self.record() if self.phase in ("record", "results") else None,
                 "powers": self.powers,
                 "power_text": POWER_TEXT,
                 "spent": self.spent,
@@ -1173,6 +1395,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self._send({"ok": False, "error": "No team has that code."})
             return self._send({"ok": True, "token": token, "team": team})
 
+        if action == "phone_iam":
+            err = g.claim_seat(data.get("token"), data.get("name"))
+            if err:
+                return self._send({"ok": False, "error": err})
+            return self._send(g.phone_state(data.get("token")))
+
+        if action == "phone_vote":
+            err = g.vote(data.get("token"), data.get("row"), bool(data.get("yes")))
+            if err:
+                return self._send({"ok": False, "error": err})
+            return self._send(g.phone_state(data.get("token")))
+
         if action == "phone_scratch":
             team = g.team_of(data.get("token"))
             if not team:
@@ -1249,6 +1483,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             g.to_reel()
         elif action == "judge":
             g.judge(data["verdict"])
+        elif action == "close_vote":
+            g.close_vote()
+        elif action == "to_powers":
+            g.to_powers()
         elif action == "use_power":
             g.use_power(data["team"], data["power"], data.get("target"))
         elif action == "to_accusation":

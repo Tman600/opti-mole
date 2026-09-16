@@ -97,7 +97,9 @@ function draw() {
     P && P.scratches, P && P.can_scratch, P && P.slowed, P && P.they_slowed,
     P && P.theirs && [P.theirs.text, P.theirs.hijack_of, P.theirs.contested],
     P && P.hijacks, P && P.can_hijack,
-    P && P.lead, P && P.discs_left, P && P.totals, V.err, V.shot ? V.shot.length : 0, V.busy
+    P && P.lead, P && P.discs_left, P && P.totals, V.err, V.shot ? V.shot.length : 0, V.busy,
+    P && P.me, P && P.taken,
+    P && P.reel && [P.reel.id, P.reel.mine, P.reel["in"], P.reel.expected]
   ]);
   if (sig === V.sig) return;
   V.sig = sig;
@@ -109,7 +111,8 @@ function draw() {
   b.dataset.slowed = P && P.slowed ? "1" : "0";
   // animate only when the screen itself changes, not on every poll
   var kind = [!!TOKEN, P && P.phase, !!(P && P.mine), !!(P && P.pending), !!V.shot,
-              !!(P && P.mine && P.mine.loading)].join("|");
+              !!(P && P.mine && P.mine.loading),
+              P && P.reel && P.reel.id, !!(P && P.me)].join("|");
   var changed = kind !== V.kind;
   V.kind = kind;
 
@@ -177,6 +180,7 @@ function joinNow() {
 /* ---- in game ---- */
 
 function screenGame() {
+  if (P.phase === "reel") return P.me ? screenVote() : screenWho();
   if (P.phase !== "play") return screenWaiting();
   if (P.mine) return V.shot ? screenReview() : screenTask();
   // No task of our own: the other team being busy never stops us any more.
@@ -234,6 +238,7 @@ function screenWaiting() {
     hiding: "Go and hide your discs.",
     briefing: "Roles are being read.",
     reel: "Everyone back to the laptop. The reel is playing.",
+    record: "The record is on the laptop. Look at it.",
     powers: "Powers are being spent.",
     accusation: "Name the mole.",
     results: "It is over."
@@ -243,6 +248,83 @@ function screenWaiting() {
     '<span class="teamtag">team ' + P.team + '</span>' +
     '<div class="big" style="margin-top:18px">' + esc(text) + '</div>' +
     '</div>' + footer();
+}
+
+/* A vote needs a name on it or the record at the end means nothing. The list
+   is this team only - you cannot vote as somebody on the other side. */
+function screenWho() {
+  var taken = P.taken || [];
+  var names = (P.roster || []).map(function (n) {
+    var gone = taken.indexOf(n) >= 0;
+    return '<button' + (gone ? ' disabled' : '') +
+      ' onclick="iam(' + JSON.stringify(n).replace(/"/g, "&quot;") + ')">' +
+      esc(n) + (gone ? ' <span class="small dim">already voting</span>' : '') +
+      '</button>';
+  }).join("");
+
+  return '' +
+  '<div class="panel">' +
+    '<div class="kicker">who is holding this phone?</div>' +
+    '<div class="small dim" style="margin-bottom:14px">Every photograph goes to a ' +
+    'vote and yours is counted under your name. Nobody sees who voted which way ' +
+    'until the record, at the end.</div>' +
+    names +
+    '<div class="err">' + esc(V.err) + '</div>' +
+  '</div>' + footer();
+}
+
+function screenVote() {
+  var r = P.reel;
+  if (!r) return screenWaiting();
+  var tags = ['team ' + r.team];
+  if (r.late) tags.push('late');
+  if (r.power) tags.push('special disc');
+  if (r.race) tags.push('race');
+  else if (r.hijack_of) tags.push('hijacked');
+
+  var mine = r.mine;
+  var cast = mine === true || mine === false;
+
+  return '' +
+  '<div class="panel">' +
+    '<div class="kicker">' + (r.i + 1) + ' of ' + r.of + ' &middot; ' + tags.join(' &middot; ') +
+      ' &middot; worth ' + r.worth + '</div>' +
+    '<div class="task">' + esc(r.text) + '</div>' +
+    (r.photo ? '<img class="shot" src="' + esc(r.photo) + '">' : '') +
+    (r.note ? '<div class="small dim">&ldquo;' + esc(r.note) + '&rdquo;</div>' : '') +
+  '</div>' +
+  '<div class="rowsplit">' +
+    '<button class="vote yes' + (mine === true ? ' on' : '') + '" onclick="vote(true)">counts</button>' +
+    '<button class="vote no' + (mine === false ? ' on' : '') + '" onclick="vote(false)">does not</button>' +
+  '</div>' +
+  '<div class="center small dim">' + r["in"] + ' of ' + r.expected + ' in' +
+    (cast ? ' &middot; you can change your mind until it closes' : '') + '</div>' +
+  '<div class="err">' + esc(V.err) + '</div>' +
+  '<div class="hr"></div>' +
+  '<div class="center small dim">voting as ' + esc(P.me) +
+    ' &middot; <a href="#" onclick="notMe();return false;">not you?</a></div>';
+}
+
+function iam(name) {
+  post({ action: "phone_iam", token: TOKEN, name: name }).then(function (j) {
+    if (!j.ok) { V.err = j.error || "No."; V.sig = null; draw(); return; }
+    P = j; V.err = ""; V.sig = null; draw();
+  });
+}
+
+function notMe() {
+  /* the server keeps the seat until somebody else takes it; this just lets the
+     phone hand over without waiting for the next photograph */
+  P.me = null; V.err = ""; V.sig = null; draw();
+}
+
+function vote(yes) {
+  var r = P.reel;
+  if (!r) return;
+  post({ action: "phone_vote", token: TOKEN, row: r.id, yes: yes }).then(function (j) {
+    if (!j.ok) { V.err = j.error || "No."; V.sig = null; draw(); return; }
+    P = j; V.err = ""; V.sig = null; draw();
+  });
 }
 
 function screenHunt() {

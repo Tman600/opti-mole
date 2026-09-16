@@ -27,7 +27,7 @@ house wifi. Python 3 only — no pip install, no internet, no account.
 
 - Any computer with an optical drive (a $20 USB one is fine)
 - 20 DVDs. Any DVDs. Shrek 2, a burned wedding video, the Planet Earth box set
-- 4+ people, split into two teams
+- 4+ people, split into two teams (a phone each for the reel)
 - A house
 
 No drive? The app drops into **simulator mode** automatically and gives you
@@ -56,7 +56,9 @@ codes on the shared screen would give them to the other team.
 **Phones.** Open the phone address, type your team code, done. The phone is
 your team's half of the game: it shows your lead, claims the tray, carries the
 running task and its countdown, and takes the photographs. Any number of phones
-per team; they all see the same thing.
+per team; they all see the same thing. One between you is enough for the hunt,
+but bring them all to the table for the reel - that is where each player picks
+their own name and votes.
 
 **Play.** Find a disc, bring it to the tray, insert it. Claiming it costs your
 team passcode — typed on the laptop or tapped on a phone — so nobody takes a
@@ -70,7 +72,15 @@ the other team's task or slow their next disc. Both teams can run a task at the
 same time.
 
 **The reel.** Every photograph both teams logged, in order, on the shared
-screen. The room argues each one. That argument is the scoring.
+screen. The room argues each one out loud, and then **everybody votes on their
+own phone** - counts, or does not. The screen shows how many are in and nothing
+else. A task is worth 10, 15 or 20 by how long it was given.
+
+**The record.** Before any power is spent, the votes come out: every photograph
+the room disagreed about, who stood where, and how many times each player voted
+against their own team. Unanimous votes are left out because they say nothing.
+This is the only trail the Mole leaves, and it is evidence, not proof - honest
+people disagree about the ambiguous ones too.
 
 **Powers.** Everything banked, spent at once — including CONFESSION, which
 names the Mole in your ranks out loud. Your Mole is sitting at this table and

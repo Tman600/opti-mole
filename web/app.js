@@ -145,7 +145,8 @@ function tick() {
     cap.textContent = "the reel";
     gameEl.textContent = "";
     discEl.textContent = "";
-  } else if (S.phase === "powers" || S.phase === "accusation" || S.phase === "results") {
+  } else if (S.phase === "record" || S.phase === "powers" ||
+             S.phase === "accusation" || S.phase === "results") {
     document.body.classList.remove("no-timer");
     big.textContent = S.totals.A + " – " + S.totals.B;
     big.className = "big";
@@ -175,7 +176,7 @@ function signature() {
     S.hijacks, S.can_hijack, UI.captureTeam, UI.hijackTeam,
     S.scratches, S.can_scratch, S.slowed, UI.scratchTeam, UI.specialPick, UI.specialMsg,
     S.leads, S.discs_left, S.log.length, S.reel_index, S.powers, S.spent,
-    S.accusations, S.totals, S.notes, S.phones, S.join,
+    S.accusations, S.totals, S.notes, S.phones, S.join, S.vote, S.seated,
     UI.editor, UI.hideIndex, UI.hideShown, UI.briefIndex, UI.briefShown, UI.briefRole,
     UI.capturing, UI.shot ? UI.shot.length : 0, UI.powerTeam, UI.powerPick,
     UI.draftPlayers, UI.nameErr, vol, S.host, UI.rules, !!UI.rulesHtml, UI.hostBrief, UI.molePick, UI.moleMsg
@@ -200,7 +201,8 @@ function render(force) {
 
   var f = ({
     setup: viewSetup, hiding: viewHiding, briefing: viewBriefing, play: viewPlay,
-    reel: viewReel, powers: viewPowers, accusation: viewAccusation, results: viewResults
+    reel: viewReel, record: viewRecord, powers: viewPowers,
+    accusation: viewAccusation, results: viewResults
   })[S.phase] || viewSetup;
   el("stage").innerHTML = f();
 
@@ -1030,21 +1032,125 @@ function viewReel() {
     ? '<img class="shot" src="' + esc(row.photo) + '">'
     : '<div class="noshot">no photograph</div>';
 
+  var worth = row.seconds ? worthOf(row.seconds) : 10;
+
   return '<div class="card">' +
     '<div class="kicker">the reel &middot; ' + (S.reel_index + 1) + ' of ' + S.log.length +
-      ' &middot; team ' + row.team + (row.late ? ' &middot; late' : '') +
+      ' &middot; team ' + row.team + ' &middot; worth ' + worth +
+      (row.late ? ' &middot; late, less ' + 5 : '') +
       (row.power ? ' &middot; special disc' : '') +
-      (row.contest ? ' &middot; hijacked task &mdash; first accepted photo scores' : '') + '</div>' +
+      (row.race ? ' &middot; race &mdash; first accepted photo takes +5' : '') +
+      (row.contest && !row.race ? ' &middot; hijacked task &mdash; first accepted photo scores' : '') + '</div>' +
     '<div class="lead" style="margin:12px 0 18px">' + esc(row.text) + '</div>' +
     img +
     (row.note ? '<div class="dim center" style="margin-bottom:14px">&ldquo;' + esc(row.note) + '&rdquo;</div>' : '') +
     (row.author ? '<div class="byline center" style="margin-bottom:14px">written by ' + esc(row.author) + '</div>' : '') +
     '<div class="hr"></div>' +
-    '<div class="center dim" style="margin-bottom:16px">Room decides. Argue about it.</div>' +
+    tallyBlock() +
+    '</div>';
+}
+
+/* what a task is worth, by the clock it was given - mirrors score_for() */
+function worthOf(seconds) {
+  if (seconds <= 120) return 10;
+  if (seconds <= 180) return 15;
+  return 20;
+}
+
+/* The room votes on its phones. The screen shows how many are in and nothing
+   else: put names up here and the Mole is caught on the first photograph. */
+function tallyBlock() {
+  var v = S.vote || { yes: 0, no: 0, "in": 0, of: 0 };
+  var waiting = Math.max(0, v.of - v["in"]);
+  // only a real tie, once the room is all in - not a passing 1-1 on the way there
+  var tied = v["in"] > 0 && v.yes === v.no && v["in"] >= v.of;
+
+  var dots = "";
+  for (var i = 0; i < v.of; i++) {
+    dots += '<span class="pip' + (i < v["in"] ? ' cast' : '') + '"></span>';
+  }
+
+  var head = v.of
+    ? '<div class="votehead"><div class="votecount">' + v["in"] + ' of ' + v.of + '</div>' +
+      '<div class="pips">' + dots + '</div>' +
+      '<div class="dim small">' + (waiting
+        ? waiting + (waiting === 1 ? ' phone still deciding' : ' phones still deciding')
+        : 'everybody has voted') + '</div></div>'
+    : '<div class="center dim" style="margin-bottom:14px">No players registered.</div>';
+
+  var seats = S.seated
+    ? ''
+    : '<div class="center small dim" style="margin-bottom:12px">Nobody has picked ' +
+      'their name on a phone yet &mdash; open the phone page and tap who you are, ' +
+      'or just call it here.</div>';
+
+  var tie = tied
+    ? '<div class="center" style="margin-bottom:12px;color:var(--amber)">Tied ' +
+      v.yes + '&ndash;' + v.no + '. Somebody has to settle it.</div>'
+    : '';
+
+  var said = S.message
+    ? '<div class="msg center">' + esc(S.message) + '</div>'
+    : '';
+
+  return head + seats + tie + said +
+    '<div class="row" style="margin-top:14px">' +
+      '<button class="primary grow" onclick="post(\'close_vote\')">' +
+        (v["in"] ? 'close the vote' : 'close the vote') + '</button>' +
+    '</div>' +
+    '<div class="center small dim" style="margin:14px 0 8px">or call it at the laptop</div>' +
     '<div class="row">' +
-      '<button class="huge good grow" onclick="post(\'judge\',{verdict:\'accept\'})">it counts</button>' +
-      '<button class="huge bad grow" onclick="post(\'judge\',{verdict:\'reject\'})">it does not</button>' +
-    '</div></div>';
+      '<button class="good grow" onclick="post(\'judge\',{verdict:\'accept\'})">it counts</button>' +
+      '<button class="bad grow" onclick="post(\'judge\',{verdict:\'reject\'})">it does not</button>' +
+    '</div>';
+}
+
+/* ---- the record ---- */
+
+function verdictWord(v) {
+  return ({ accept: "counted", reject: "not counted", beaten: "beaten to it",
+            vetoed: "struck out" })[v] || "not counted";
+}
+
+/* Every split vote of the night, all at once, just before the accusations.
+   A unanimous vote says nothing about anybody, so it is not here. */
+function viewRecord() {
+  var r = S.record || { rows: [], people: [], judged: 0, split: 0 };
+
+  var people = r.people.map(function (c) {
+    var suspicious = c.against_own > 0;
+    return '<div class="item">' +
+      '<span class="pill">' + esc(c.name) + '</span>' +
+      '<span class="flex small dim">team ' + c.team + ' &middot; voted on ' + c.voted + '</span>' +
+      '<span class="small' + (suspicious ? ' warn' : ' dim') + '">' +
+        c.against_own + ' against own' + '</span>' +
+      '<span class="small dim">' + c.for_theirs + ' for theirs</span>' +
+      '</div>';
+  }).join("");
+
+  var rows = r.rows.map(function (row) {
+    return '<div class="split">' +
+      '<div class="kicker">team ' + row.team + ' &middot; ' + esc(row.disc) +
+        ' &middot; ' + verdictWord(row.verdict) + '</div>' +
+      '<div class="small" style="margin:6px 0 10px">' + esc(row.text) + '</div>' +
+      '<div class="sides">' +
+        '<div><span class="side good">counts</span> ' + esc(row.yes.join(", ")) + '</div>' +
+        '<div><span class="side bad">does not</span> ' + esc(row.no.join(", ")) + '</div>' +
+      '</div></div>';
+  }).join("");
+
+  return '<div class="card">' +
+    '<div class="kicker">the record</div>' +
+    '<div class="lead" style="margin:10px 0 6px">Who stood where</div>' +
+    '<div class="dim small" style="margin-bottom:18px">' + r.judged +
+      ' photographs went to a vote. The room agreed on ' + (r.judged - r.split) +
+      ' of them, so only the ' + r.split + ' it argued about are here. ' +
+      'Honest people disagree too &mdash; this is evidence, not proof.</div>' +
+    (people ? '<div class="list">' + people + '</div>' : '') +
+    (rows ? '<div class="hr"></div>' + rows : '') +
+    '<button class="primary huge wide" style="margin-top:18px" ' +
+      'onclick="post(\'to_powers\')">on to the powers</button>' +
+    '</div>';
 }
 
 /* ---- powers ---- */

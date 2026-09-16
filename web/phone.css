@@ -234,6 +234,25 @@ label {
 
 .score { font-family: var(--mono); font-size: 34px; }
 
+/* the two judgements. Big, because this is read across a dark room, and
+   coloured only once you have committed to one. */
+button.vote {
+  font-size: 18px;
+  padding: 26px 8px;
+  letter-spacing: 0.16em;
+}
+button.vote.yes.on {
+  border-color: var(--good);
+  background: var(--good);
+  color: #08120a;
+}
+button.vote.no.on {
+  border-color: var(--red);
+  background: var(--red);
+  color: #180a09;
+}
+a { color: var(--amber); }
+
 /* ---------------------------------------------- the background
    The same drifting disc sheen as the laptop, dimmer: a phone is held close,
    and this screen is read in a hurry in a dark hallway. */

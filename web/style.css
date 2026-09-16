@@ -124,6 +124,7 @@ body[data-phase="play"] .bg { filter: hue-rotate(-18deg) saturate(0.8); opacity:
 body[data-phase="hiding"] .bg,
 body[data-phase="briefing"] .bg { filter: saturate(0.75); opacity: 0.5; }
 body[data-phase="reel"] .bg { filter: hue-rotate(10deg) saturate(1.1); opacity: 0.95; }
+body[data-phase="record"] .bg,
 body[data-phase="powers"] .bg,
 body[data-phase="accusation"] .bg { filter: hue-rotate(-30deg) saturate(1.05); opacity: 0.8; }
 body[data-phase="results"] .bg { filter: hue-rotate(6deg) saturate(1.15); opacity: 1; }
@@ -470,6 +471,40 @@ label { display: block; font-size: 11px; letter-spacing: 0.3em; text-transform: 
 }
 
 #cam { width: 100%; max-height: 42vh; border: 1px solid var(--edge); background: #000; }
+
+/* the vote: how many are in, and nothing else. A name on this screen would
+   hand the room its Mole on the first photograph of the night. */
+.votehead { text-align: center; margin-bottom: 16px; }
+.votecount {
+  font-family: var(--mono);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+}
+.pips { display: flex; justify-content: center; gap: 8px; margin: 14px 0 10px; }
+.pip {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 1px solid var(--edge); background: transparent;
+  transition: background 260ms ease, border-color 260ms ease, transform 260ms ease;
+}
+.pip.cast {
+  background: var(--amber); border-color: var(--amber);
+  transform: scale(1.12);
+}
+
+/* the record */
+.split { border-top: 1px solid #1a1e23; padding: 16px 0; }
+.split:first-of-type { border-top: none; }
+.sides { display: flex; gap: 22px; flex-wrap: wrap; font-size: 14px; }
+.sides > div { flex: 1 1 260px; }
+.side {
+  display: inline-block; min-width: 86px;
+  font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase;
+}
+.side.good { color: var(--good); }
+.side.bad { color: var(--bad); }
+.warn { color: var(--amber); }
 
 .spin {
   font-family: var(--mono);

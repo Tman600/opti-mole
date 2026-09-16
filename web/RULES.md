@@ -10,7 +10,7 @@
 - A computer with a DVD drive. The laptop stays next to the drive all game.
 - 8 to 20 DVDs **with something on them**: movies or burned data discs. Blank discs can't be read. Avoid music CDs, because two copies of the same album count as the same disc.
 - 4 or more players, plus an optional host.
-- Phones on the same wifi as the computer. Optional, but the game is much better with them.
+- A phone each, on the same wifi as the computer. One phone per team is enough to play, but the reel is judged from phones, so bring them all to the table at the end.
 
 ## The host (optional)
 
@@ -30,7 +30,7 @@
 2. **Add players.** Split the teams, pick the game length and the Mole setting, and type in the host's name if you have one.
 3. **Hiding.** The laptop goes around the room, host first. When it names you, take it, and everyone else looks away. Hide your discs in the places the screen describes, then pass the laptop on.
 4. **Roles.** The laptop goes around again. Each player privately learns their team, whether they are a Mole, their **team code**, and the phone link. Never say your team code out loud.
-5. **Phones.** Everyone opens the phone link and types their team code.
+5. **Phones.** Everyone opens the phone link and types their team code. During the hunt one phone per team is plenty. At the reel, everyone needs one in their hand.
 6. Put the laptop back next to the drive. It does not move again.
 
 ## Playing
@@ -39,14 +39,15 @@
 2. Find any disc, bring it to the tray and put it in.
 3. **Claim it with your team code**, either typed on the laptop or with the claim button on your phone. The first team to claim it gets the task.
 4. A claimed disc is used up. It can't be claimed again.
-5. **Both teams can have a task running at the same time.** The other team's task never blocks you.
-6. **One task per team.** Your team can't claim a disc while your own task is running. Log it or give up first.
-7. The tray still takes one disc at a time. If nobody can claim a disc, take it out (or press *put it back*) and it goes back in play.
-8. Do the task before its timer runs out. Take a photo on your phone and **log it**. A late task loses 5 points.
-9. **Give up** puts the disc back in play for anyone.
-10. Nothing is judged during play. Everything is judged at the reel.
-11. Your phone shows your team a **lead**, a description of where a disc is hidden. When there is a host, leads never point at a special disc.
-12. When the game clock hits zero, finish what you're doing and press **call it**.
+5. **Race tasks go to both teams at once.** If the other team is free when you claim one, they get the same task on their own clock, without spending a disc. If they are already busy there is no race, and no bonus for anyone.
+6. **Both teams can have a task running at the same time.** The other team's task never blocks you.
+7. **One task per team.** Your team can't claim a disc while your own task is running. Log it or give up first.
+8. The tray still takes one disc at a time. If nobody can claim a disc, take it out (or press *put it back*) and it goes back in play.
+9. Do the task before its timer runs out. Take a photo on your phone and **log it**. A late task loses 5 points.
+10. **Give up** puts the disc back in play for anyone.
+11. Nothing is judged during play. Everything is judged at the reel.
+12. Your phone shows your team a **lead**, a description of where a disc is hidden. When there is a host, leads never point at a special disc.
+13. When the game clock hits zero, finish what you're doing and press **call it**.
 
 ## Special discs
 
@@ -59,7 +60,7 @@
 |---|---|
 | CONFESSION | The game names the Mole on your own team out loud. |
 | VETO | Strike one of the other team's tasks. It scores zero. |
-| TESTIMONY | One of your rejected tasks scores 10 anyway. |
+| TESTIMONY | One of your rejected tasks scores anyway, at what that task was worth. |
 | SHIELD | Your team's Mole guess counts for nothing either way. No points won or lost. |
 | LONG COUNT | Double your single best-scoring task. |
 | HIJACK | During play, join the other team's running task. |
@@ -70,7 +71,7 @@
 1. You can use a HIJACK when the other team has a task running and your team has none.
 2. Use it from your phone, or type your team code under *use hijack* on the laptop.
 3. Your team joins **their** task, on **their** clock. Their attempt is not cancelled.
-4. Both teams can log it. At the reel, **the first photo the room accepts takes the points**, and any power that comes with it. Logging a rushed photo first doesn't help if the room rejects it.
+4. Both teams can log it. At the reel, **the first photo the room votes through takes the points**, and any power that comes with it. Logging a rushed photo first doesn't help if the room rejects it.
 5. If the team that owned the task gives up, the hijacking team can still finish it.
 6. A task can only be hijacked once, and each HIJACK is used once.
 
@@ -88,17 +89,33 @@
 1. The Mole plays for the team they were put on all game, but wins only if the **other** team wins.
 2. The Mole must never reveal themselves.
 3. **Once per game**, the Mole may quietly re-hide a disc their team is holding. Nobody is told.
+4. At the reel, a Mole's vote is their real weapon: voting down their own team's photographs. It works, and it shows up on the record afterwards.
 
 ## The reel
 
 1. Every logged photo is shown in order on the laptop.
-2. The room argues, then presses **it counts** or **it does not**.
-3. Scoring:
-   - Accepted task: **10 points**
-   - Race task, if your team was first: **+5**
+2. Everyone picks their own name on their phone once, at the start of the reel. Your votes are counted under that name.
+3. The room argues out loud, and **every player votes on their own phone**: *counts* or *does not*. You can change your mind until the vote closes.
+4. The laptop shows **how many have voted and nothing else**. Nobody learns who voted which way until the record.
+5. A photo counts if more of the votes cast say so. People who are missing, or who have no phone, simply don't count.
+6. A **tie** is left to the room to settle out loud on the laptop. So is a photo nobody voted on - there is always a *call it here* fallback.
+7. Scoring, by how long the task was given:
+   - Two minutes or less: **10 points**
+   - Up to three minutes: **15 points**
+   - Longer than that: **20 points**
+   - Race task, first accepted photo: **+5**
    - Late task: **-5**
    - Rejected task: **0**
    - Hijacked task: only the first accepted photo scores. A later accepted photo scores **0**
+   - A race is not a hijack: both teams' photos score, and only the bonus is at stake
+
+## The record
+
+1. After the last photo, before any power is spent, the laptop shows **the record**.
+2. It lists only the photos the room **disagreed** about. A unanimous vote says nothing about anybody.
+3. For each of those, it shows who said it counts and who said it does not, and per player, how many times they voted **against their own team**.
+4. This is the only trail the Mole leaves. It is evidence, not proof: honest people disagree about the ambiguous ones too.
+5. Read it, argue about it, then move on to the powers.
 
 ## Accusations
 
