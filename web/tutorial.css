@@ -1,0 +1,273 @@
+/* OPTI-MOLE - the tutorial. Same 2003 DVD menu: black, brushed silver, amber. */
+
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(ellipse at 50% 38%, #12161b 0%, #07080a 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tut-progress {
+  position: absolute;
+  top: 16px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+.tut-progress span {
+  width: 34px; height: 3px;
+  background: #2c3138;
+}
+.tut-progress span.done { background: #7d838c; }
+.tut-progress span.now { background: #d8a13a; }
+
+.tut-viewport { position: relative; }
+
+.tut-frame {
+  position: absolute;
+  left: 0; top: 0;
+  width: 1280px; height: 720px;
+  transform-origin: 0 0;
+  overflow: hidden;
+}
+
+.tut-caption {
+  min-height: 84px;
+  max-width: 1080px;
+  margin: 10px auto 0;
+  padding: 0 30px;
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.4;
+  color: #eceef1;
+  letter-spacing: 0.01em;
+  transition: opacity 400ms;
+}
+
+.tut-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 18px;
+}
+.tut-controls button {
+  padding: 9px 16px;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+}
+.tut-controls button.on { color: #d8a13a; border-color: #d8a13a; }
+
+/* ---------------------------------------------- drawing kit */
+
+.tut-frame > * { position: absolute; }
+.t-c { transform: translate(-50%, -50%); }
+
+.t-title {
+  left: 60px; top: 44px;
+  font-size: 13px;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: #d8a13a;
+}
+
+.t-logo {
+  font-family: "Baloo", "Arial Rounded MT Bold", sans-serif;
+  font-size: 128px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.t-logo span { -webkit-background-clip: text; background-clip: text; color: transparent; }
+.t-logo .opti { background-image: linear-gradient(180deg, #fff 0%, #b9bec5 46%, #eceef1 54%, #767c84 100%); }
+.t-logo .mole { background-image: linear-gradient(180deg, #e3b58a 0%, #a8744b 46%, #c28d5e 54%, #6f4a2d 100%); }
+
+.t-sub {
+  font-size: 15px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #7d838c;
+  white-space: nowrap;
+}
+
+.t-label {
+  font-size: 14px;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: #7d838c;
+  white-space: nowrap;
+}
+.t-label.a { color: #9fb7c9; }
+.t-label.b { color: #c9a79f; }
+.t-label.amber { color: #d8a13a; }
+
+/* a DVD: silver with a slow sheen, a clear ring and a hole.
+   Always absolute: it gets moved into the drive tray mid-scene, and there it is
+   no longer a direct child of the frame. */
+.t-disc { position: absolute; border-radius: 50%; }
+/* A loose disc must sit above the drive, whose body and tray carry z-indexes -
+   otherwise it flies in BEHIND the open tray, then jumps in front when it lands.
+   Once it's inside the tray it's no longer a direct child, so the drive body
+   still covers it as the tray slides shut. */
+.tut-frame > .t-disc { z-index: 5; }
+.t-disc .face {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #07080a 0 10%, #7f858d 10.5% 15%, #2a2e34 15.5% 19%, transparent 19.5%),
+    conic-gradient(from 0deg, #c9ccd1, #8e949c, #e8eaed, #b7b0a4, #d6d9dd, #8e949c, #a9b2bd, #c9ccd1);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+.t-disc.special .face { box-shadow: 0 0 0 4px #d8a13a, 0 6px 18px rgba(0,0,0,0.5); }
+.t-disc.spinning .face { animation: t-spin 1.1s linear infinite; }
+.t-disc.fast .face { animation-duration: 0.35s; }
+.t-disc.wobble .face { animation: t-wobble 0.5s ease-in-out infinite; }
+.t-disc .scratch {
+  position: absolute; inset: 0; border-radius: 50%;
+  background:
+    linear-gradient(115deg, transparent 42%, rgba(20,20,20,0.55) 43%, transparent 44.5%),
+    linear-gradient(35deg, transparent 58%, rgba(20,20,20,0.45) 59%, transparent 60%),
+    linear-gradient(160deg, transparent 30%, rgba(20,20,20,0.4) 31%, transparent 32%);
+}
+@keyframes t-spin { to { transform: rotate(360deg); } }
+@keyframes t-wobble {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  50% { transform: rotate(14deg) scale(0.97); }
+}
+
+/* the drive: a tray slides out from behind the body */
+.t-drive { width: 600px; height: 130px; }
+.t-drive .body {
+  position: absolute; left: 0; top: 0; width: 330px; height: 130px; z-index: 3;
+  background: linear-gradient(180deg, #2a2f36 0%, #15181c 100%);
+  border: 1px solid #3a4048;
+}
+.t-drive .slot { position: absolute; left: 24px; right: 24px; top: 58px; height: 4px; background: #07080a; }
+.t-drive .badge {
+  position: absolute; left: 24px; bottom: 16px;
+  font-size: 11px; letter-spacing: 0.34em; color: #7d838c;
+}
+.t-drive .led {
+  position: absolute; right: 24px; bottom: 20px; width: 10px; height: 10px; border-radius: 50%;
+  background: #3a2c14;
+}
+.t-drive .led.on { background: #d8a13a; animation: t-blink 0.35s steps(2, end) infinite; }
+@keyframes t-blink { 50% { background: #3a2c14; } }
+.t-drive .tray {
+  position: absolute; left: 30px; top: 18px; width: 280px; height: 94px; z-index: 2;
+  background: linear-gradient(180deg, #3a3f46 0%, #24282e 100%);
+  border: 1px solid #4a5058;
+}
+.t-drive .tray .well {
+  position: absolute; left: 50%; top: 50%; width: 88px; height: 88px;
+  transform: translate(-50%, -50%); border-radius: 50%; background: #15181c;
+}
+
+/* a person */
+.t-fig { width: 56px; height: 86px; }
+.t-fig .head {
+  position: absolute; left: 50%; top: 0; width: 34px; height: 34px;
+  transform: translateX(-50%); border-radius: 50%;
+}
+.t-fig .torso {
+  position: absolute; left: 0; bottom: 0; width: 56px; height: 46px;
+  border-radius: 28px 28px 8px 8px;
+}
+.t-fig.a .head, .t-fig.a .torso { background: #9fb7c9; }
+.t-fig.b .head, .t-fig.b .torso { background: #c9a79f; }
+.t-fig.host .head, .t-fig.host .torso { background: #d8a13a; }
+.t-fig.plain .head, .t-fig.plain .torso { background: #8e949c; }
+.t-fig.mole .head, .t-fig.mole .torso { background: #a8744b; }
+.t-fig .tag {
+  position: absolute; left: 50%; top: -30px; transform: translateX(-50%);
+  font-size: 11px; letter-spacing: 0.24em; padding: 3px 8px; white-space: nowrap;
+  border: 1px solid #a8744b; color: #e3b58a; background: #07080a;
+}
+
+/* panels */
+.t-card {
+  background: linear-gradient(180deg, #171b21 0%, #0c0e11 100%);
+  border: 1px solid #2c3138;
+  padding: 18px 22px;
+  color: #eceef1;
+}
+.t-card .k { font-size: 11px; letter-spacing: 0.36em; text-transform: uppercase; color: #d8a13a; margin-bottom: 8px; }
+.t-card .big { font-size: 24px; line-height: 1.3; }
+.t-card .clock { font-family: "Consolas", monospace; font-size: 44px; color: #d8a13a; margin-top: 8px; }
+.t-card .dim { color: #7d838c; font-size: 14px; }
+.t-card .code { font-family: "Consolas", monospace; font-size: 54px; letter-spacing: 0.3em; color: #d8a13a; }
+
+.t-power {
+  width: 132px; height: 184px;
+  background: linear-gradient(180deg, #171b21 0%, #0c0e11 100%);
+  border: 1px solid #2c3138;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; text-align: center;
+}
+.t-power .n { font-size: 14px; letter-spacing: 0.14em; color: #eceef1; }
+.t-power .w { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #7d838c; }
+.t-power.live { border-color: #d8a13a; }
+.t-power.live .n { color: #d8a13a; }
+
+.t-room {
+  border: 1px solid #3a4048;
+  background: rgba(255,255,255,0.02);
+}
+.t-room span {
+  position: absolute; left: 10px; top: 8px;
+  font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #5d636b;
+}
+
+.t-phone {
+  width: 190px; height: 360px; border-radius: 26px;
+  background: #15181c; border: 2px solid #3a4048;
+}
+.t-phone .screen {
+  position: absolute; left: 12px; right: 12px; top: 34px; bottom: 34px;
+  background: #07080a; border: 1px solid #2c3138; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 10px; color: #eceef1;
+}
+.t-phone .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+/* the phone screen is only ~160px wide: the big spaced-out code and labels must shrink */
+.t-phone .code { font-size: 40px; letter-spacing: 0.12em; }
+.t-phone .t-label { font-size: 11px; letter-spacing: 0.22em; }
+
+.t-laptop { width: 110px; height: 72px; }
+.t-laptop .lid { position: absolute; left: 10px; top: 0; width: 90px; height: 58px; background: #2a2f36; border: 2px solid #4a5058; }
+.t-laptop .lid::after { content: ""; position: absolute; inset: 6px; background: #d8a13a; opacity: 0.5; }
+.t-laptop .base { position: absolute; left: 0; bottom: 0; width: 110px; height: 12px; background: #4a5058; }
+
+.t-stamp {
+  font-size: 30px; letter-spacing: 0.18em; padding: 6px 16px;
+  border: 3px solid currentColor; white-space: nowrap;
+}
+.t-stamp.yes { color: #7fae84; }
+.t-stamp.no { color: #d06a60; }
+.t-stamp.amber { color: #d8a13a; }
+
+.t-photo { width: 220px; height: 150px; background: #1c2026; border: 6px solid #d9dbde; overflow: hidden; }
+.t-photo i { position: absolute; display: block; }
+
+.t-bar { width: 360px; height: 16px; border: 1px solid #3a4048; background: #0c0e11; }
+.t-bar div { height: 100%; width: 0; background: #a8744b; }
+
+.t-dots { font-size: 30px; letter-spacing: 0.3em; color: #d8a13a; }
+.t-dots b { color: #2c3138; font-weight: normal; }
+.t-dots b.lit { color: #d8a13a; }
+
+.t-svg { left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none; overflow: visible; }
+.t-svg path { fill: none; stroke: #a8744b; stroke-width: 3; stroke-dasharray: 10 8; }
+.t-svg path.amber { stroke: #d8a13a; }
+
+.t-spot {
+  left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none;
+  background: radial-gradient(circle 110px at var(--x, 640px) var(--y, 360px), transparent 0 100%, rgba(0,0,0,0) 0),
+              radial-gradient(circle 130px at var(--x, 640px) var(--y, 360px), rgba(0,0,0,0) 60%, rgba(0,0,0,0.78) 100%);
+}
+
+.t-plus { font-family: "Baloo", "Arial Rounded MT Bold", sans-serif; font-size: 64px; color: #d8a13a; }

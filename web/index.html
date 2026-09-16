@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opti-Mole</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="tutorial.css">
+</head>
+<body>
+
+<!-- the drifting disc-sheen background; purely decorative -->
+<div class="bg" aria-hidden="true"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="sheen"></i></div>
+
+<div id="timerbar">
+  <div class="discs" id="discs"></div>
+  <div class="big" id="bigclock">00:00</div>
+  <div class="caption" id="clockcap">game clock</div>
+  <div class="game" id="gameclock"></div>
+</div>
+
+<div id="stage"></div>
+
+<script src="sound.js"></script>
+<script src="app.js"></script>
+<script src="tutorial.js"></script>
+<script>OptiMoleSound.controls({ music: true });</script>
+</body>
+</html>

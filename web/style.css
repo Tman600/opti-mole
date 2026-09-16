@@ -1,0 +1,491 @@
+/* OPTI-MOLE - DVD menu, circa 2003. Black, brushed metal, amber highlight. */
+
+:root {
+  --ink: #07080a;
+  --panel: #101317;
+  --edge: #2c3138;
+  --silver: #c9ccd1;
+  --dim: #7d838c;
+  --amber: #d8a13a;
+  --teamA: #9fb7c9;
+  --teamB: #c9a79f;
+  --bad: #a5504a;
+  --good: #5f8f63;
+  --face: "Futura", "Century Gothic", "Trebuchet MS", "Segoe UI", sans-serif;
+  --mono: "DIN Alternate", "Consolas", "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  margin: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--silver);
+  font-family: var(--face);
+  letter-spacing: 0.03em;
+  overflow: hidden;
+}
+
+/* No background of its own: a background on the body paints over anything
+   sitting behind the content, which is exactly where .bg lives. */
+body { margin: 0; height: 100%; overflow: hidden; background: none; }
+
+body::after {
+  /* vignette, over the drifting background */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.58) 100%);
+}
+
+/* ------------------------------------------------ the background
+
+   The colours in the sheen of a disc held under a lamp: bronze, violet and a
+   deep green, drifting slowly in the dark. Each field moves on its own long
+   cycle so the loop never lands in the same place twice, and a slow band of
+   light sweeps across like a reflection. Nothing here is bright - it sits
+   behind a black vignette and must never compete with the type. */
+
+.bg {
+  position: fixed;
+  inset: -25%;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+  /* the whole thing shifts with the phase of the night */
+  transition: filter 3s ease, opacity 3s ease;
+}
+
+.bg i {
+  position: absolute;
+  display: block;
+  width: 66%;
+  height: 76%;
+  border-radius: 50%;
+  will-change: transform;
+  /* the colours themselves wander over several minutes, like a disc being
+     tilted slowly under a light */
+  filter: saturate(1.05);
+}
+
+.bg .c1 {
+  left: -4%; top: -6%;
+  background: radial-gradient(closest-side, rgba(196,126,66,0.68), rgba(196,126,66,0) 72%);
+  animation: bg-drift-1 74s ease-in-out infinite alternate, bg-hue 210s linear infinite alternate;
+}
+.bg .c2 {
+  right: -8%; top: 4%;
+  background: radial-gradient(closest-side, rgba(132,72,158,0.60), rgba(132,72,158,0) 72%);
+  animation: bg-drift-2 97s ease-in-out infinite alternate, bg-hue 260s linear infinite alternate-reverse;
+}
+.bg .c3 {
+  left: 18%; bottom: -14%;
+  background: radial-gradient(closest-side, rgba(52,132,112,0.52), rgba(52,132,112,0) 72%);
+  animation: bg-drift-3 118s ease-in-out infinite alternate, bg-hue 300s linear infinite alternate;
+}
+
+/* the reflection sweeping over the disc */
+.bg .sheen {
+  left: -60%; top: -40%;
+  width: 220%; height: 180%;
+  border-radius: 0;
+  background: linear-gradient(74deg,
+    rgba(255,255,255,0) 42%, rgba(226,205,178,0.055) 50%, rgba(255,255,255,0) 58%);
+  animation: bg-sheen 46s linear infinite;
+}
+
+@keyframes bg-drift-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(9%, 7%, 0) scale(1.14); }
+}
+@keyframes bg-drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1.08); }
+  to   { transform: translate3d(-11%, 9%, 0) scale(0.94); }
+}
+@keyframes bg-drift-3 {
+  from { transform: translate3d(0, 0, 0) scale(0.96); }
+  to   { transform: translate3d(12%, -8%, 0) scale(1.18); }
+}
+@keyframes bg-hue {
+  from { filter: saturate(1.05) hue-rotate(-14deg); }
+  to   { filter: saturate(1.15) hue-rotate(20deg); }
+}
+@keyframes bg-sheen {
+  from { transform: translate3d(-22%, 0, 0); }
+  to   { transform: translate3d(22%, 0, 0); }
+}
+
+/* Each part of the night gets its own cast: warm while you set up, cooler and
+   dimmer once the clock is running, warm and brighter again for the reel. */
+body[data-phase="play"] .bg { filter: hue-rotate(-18deg) saturate(0.8); opacity: 0.55; }
+body[data-phase="hiding"] .bg,
+body[data-phase="briefing"] .bg { filter: saturate(0.75); opacity: 0.5; }
+body[data-phase="reel"] .bg { filter: hue-rotate(10deg) saturate(1.1); opacity: 0.95; }
+body[data-phase="powers"] .bg,
+body[data-phase="accusation"] .bg { filter: hue-rotate(-30deg) saturate(1.05); opacity: 0.8; }
+body[data-phase="results"] .bg { filter: hue-rotate(6deg) saturate(1.15); opacity: 1; }
+
+/* ------------------------------------------------ the timer, top centre */
+
+#timerbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 40;
+  text-align: center;
+  padding: 14px 0 12px;
+  background: linear-gradient(180deg, #16191e 0%, #0b0d10 100%);
+  border-bottom: 1px solid var(--edge);
+}
+
+#timerbar .big {
+  font-family: var(--mono);
+  font-size: 78px;
+  line-height: 0.92;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--silver);
+  font-variant-numeric: tabular-nums;
+}
+
+#timerbar .big.task {
+  color: var(--amber);
+}
+
+#timerbar .big.urgent {
+  color: #d64c42;
+  animation: pulse 1s steps(2, end) infinite;
+}
+
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+#timerbar .caption {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+#timerbar .game {
+  position: absolute;
+  right: 26px;
+  bottom: 14px;
+  font-family: var(--mono);
+  font-size: 22px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+#timerbar .discs {
+  position: absolute;
+  left: 26px;
+  bottom: 14px;
+  font-family: var(--mono);
+  font-size: 22px;
+  color: var(--dim);
+}
+
+/* each team's task clock, on its own side of the game clock */
+#timerbar .side-task {
+  font-size: 46px;
+  line-height: 0.95;
+  font-weight: 700;
+  color: var(--amber);
+  bottom: 12px;
+}
+#timerbar .side-task .lbl {
+  display: block;
+  font-family: var(--face);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#timerbar .side-task.urgent { color: #d64c42; animation: pulse 1s steps(2, end) infinite; }
+#timerbar .side-idle {
+  font-family: var(--face);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  bottom: 18px;
+}
+#timerbar .game.side-task, #timerbar .game.side-idle { text-align: right; }
+
+body.no-timer #timerbar { display: none; }
+body.no-timer #stage { padding-top: 40px; }
+
+/* ------------------------------------------------ layout */
+
+#stage {
+  position: absolute;
+  inset: 0;
+  padding: 150px 46px 40px;
+  overflow-y: auto;
+}
+
+h1 {
+  font-size: 58px;
+  letter-spacing: 0.5em;
+  margin: 0 0 6px;
+  font-weight: 400;
+  background: linear-gradient(180deg, #ffffff 0%, #9aa0a8 48%, #e8eaed 52%, #6d737b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ------------------------------------------------ the name */
+
+@font-face {
+  font-family: "Baloo";
+  src: local("Baloo"), url("baloo.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* Bold and round, chrome on OPTI-, brown on MOLE. Baloo is a single heavy
+   weight, so no faux-bold on top, and the wide tracking the thin titles use
+   would pull a chunky face apart. */
+h1.brand {
+  font-family: "Baloo", "Arial Rounded MT Bold", var(--face);
+  font-weight: normal;
+  font-size: clamp(40px, 7.4vw, 76px);   /* never wider than the window */
+  line-height: 1;
+  letter-spacing: 0.06em;
+  margin: 0 0 10px;
+  background: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+h1.brand .opti,
+h1.brand .mole {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+h1.brand .opti {
+  background-image: linear-gradient(180deg, #ffffff 0%, #b9bec5 46%, #eceef1 54%, #767c84 100%);
+}
+
+h1.brand .mole {
+  background-image: linear-gradient(180deg, #e3b58a 0%, #a8744b 46%, #c28d5e 54%, #6f4a2d 100%);
+}
+
+h2 {
+  font-size: 15px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 400;
+  margin: 34px 0 12px;
+  border-bottom: 1px solid var(--edge);
+  padding-bottom: 8px;
+}
+
+.sub {
+  color: var(--dim);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+}
+
+.row { display: flex; gap: 18px; flex-wrap: wrap; }
+.grow { flex: 1 1 320px; }
+.center { text-align: center; }
+.dim { color: var(--dim); }
+.small { font-size: 13px; }
+
+/* ------------------------------------------------ controls */
+
+button {
+  font-family: var(--face);
+  font-size: 15px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--silver);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 7px;
+  padding: 13px 22px;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease,
+              transform 120ms ease, box-shadow 160ms ease;
+}
+
+button:hover {
+  border-color: var(--amber);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.45);
+}
+button:active { transform: translateY(0) scale(0.985); box-shadow: none; }
+button:disabled { opacity: 0.3; cursor: default; border-color: var(--edge); color: var(--dim); }
+button:disabled:hover { transform: none; box-shadow: none; }
+
+button.primary {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+button.primary:hover { background: var(--amber); color: #14100a; }
+
+button.wide { width: 100%; }
+
+/* the big commitments - begin, log it, claim - are pills; the small utility
+   buttons stay nearly square, which keeps the menu feeling like a menu */
+button.huge, button.primary.wide {
+  font-size: 26px;
+  padding: 30px 20px;
+  letter-spacing: 0.3em;
+  border-radius: 999px;
+}
+button.primary.wide { font-size: 15px; padding: 15px 22px; letter-spacing: 0.24em; }
+button.huge { font-size: 26px; padding: 30px 20px; letter-spacing: 0.3em; }
+button.bad:hover { border-color: var(--bad); background: var(--bad); color: #fff; }
+button.good:hover { border-color: var(--good); background: var(--good); color: #fff; }
+
+input, select, textarea {
+  font-family: var(--face);
+  font-size: 16px;
+  background: #05070a;
+  color: var(--silver);
+  border: 1px solid var(--edge);
+  border-radius: 7px;
+  padding: 11px 13px;
+  width: 100%;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(216,161,58,0.12);
+}
+
+/* ------------------------------------------------ motion
+
+   Everything is slow and small on purpose: a screen this size, glanced at from
+   across a room, should settle rather than bounce. */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* only when the night moves on, never on a routine redraw */
+#stage.enter .card,
+#stage.enter .panel,
+#stage.enter .scorebar { animation: rise 420ms cubic-bezier(.2,.7,.25,1) both; }
+#stage.enter .panel:nth-child(2) { animation-delay: 70ms; }
+#stage.enter h1, #stage.enter .sub { animation: fade 700ms ease both; }
+
+.msg { animation: fade 400ms ease both; }
+.pill.amber { transition: border-color 200ms ease, color 200ms ease; }
+#timerbar .big { transition: color 400ms ease; }
+label { display: block; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim); margin: 14px 0 5px; }
+
+/* ------------------------------------------------ panels */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 22px 24px;
+}
+
+.card {
+  border: 1px solid var(--edge);
+  background: linear-gradient(180deg, #14181d 0%, #0a0c0f 100%);
+  padding: 40px 46px;
+  max-width: 1020px;
+  margin: 0 auto;
+}
+
+.tasktext {
+  font-size: 40px;
+  line-height: 1.24;
+  letter-spacing: 0.01em;
+  color: #fff;
+  margin: 10px 0 22px;
+}
+
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.byline { color: var(--dim); font-size: 13px; font-style: italic; letter-spacing: 0.06em; }
+
+.lead {
+  font-size: 26px;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.spot {
+  font-size: 30px;
+  color: var(--amber);
+  letter-spacing: 0.02em;
+}
+
+/* teams */
+.teamA { color: var(--teamA); }
+.teamB { color: var(--teamB); }
+
+.scorebar { display: flex; gap: 0; border: 1px solid var(--edge); margin-bottom: 26px; }
+.scorebar > div { flex: 1; padding: 16px 20px; }
+.scorebar > div + div { border-left: 1px solid var(--edge); }
+.scorebar .n { font-family: var(--mono); font-size: 40px; line-height: 1; }
+.scorebar .t { font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--dim); }
+
+/* lists */
+.list { border: 1px solid var(--edge); max-height: 340px; overflow-y: auto; }
+.list .item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-bottom: 1px solid #1a1e23; font-size: 14px;
+}
+.list .item:last-child { border-bottom: none; }
+.list .item .flex { flex: 1; }
+
+.pill {
+  display: inline-block; border: 1px solid var(--edge); padding: 3px 9px;
+  font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--dim);
+}
+.pill.amber { border-color: var(--amber); color: var(--amber); }
+
+.msg { color: var(--amber); min-height: 22px; letter-spacing: 0.1em; margin: 10px 0; }
+
+/* reel */
+.shot { max-height: 46vh; border: 1px solid var(--edge); display: block; margin: 0 auto 18px; }
+.noshot {
+  height: 200px; border: 1px dashed var(--edge); display: flex; align-items: center;
+  justify-content: center; color: var(--dim); letter-spacing: 0.3em; font-size: 13px;
+  margin-bottom: 18px;
+}
+
+#cam { width: 100%; max-height: 42vh; border: 1px solid var(--edge); background: #000; }
+
+.spin {
+  font-family: var(--mono);
+  font-size: 30px;
+  letter-spacing: 0.5em;
+  color: var(--amber);
+}
+
+.stack > * + * { margin-top: 12px; }
+.hr { height: 1px; background: var(--edge); margin: 26px 0; }
+
+/* Anyone who has asked their system to calm animations down gets a still
+   background and no movement, just the colours. */
+@media (prefers-reduced-motion: reduce) {
+  .bg i, #stage.enter .card, #stage.enter .panel, #stage.enter .scorebar,
+  #stage.enter h1, #stage.enter .sub, .msg { animation: none !important; }
+  button:hover { transform: none; }
+  * { transition-duration: 1ms !important; }
+}

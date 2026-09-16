@@ -1,0 +1,344 @@
+/* OPTI-MOLE - the phone. Same 2003 DVD menu, sized for a thumb in a dark hallway. */
+
+:root {
+  --ink: #07080a;
+  --panel: #131720;
+  --edge: #2c3138;
+  --silver: #c9ccd1;
+  --dim: #7d838c;
+  --amber: #d8a13a;
+  --red: #d64c42;
+  --good: #5f8f63;
+  --face: "Futura", "Century Gothic", "Trebuchet MS", -apple-system, "Segoe UI", sans-serif;
+  --mono: "Consolas", "Courier New", monospace;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html {
+  margin: 0;
+  min-height: 100%;
+  background: var(--ink);
+  color: var(--silver);
+  font-family: var(--face);
+  letter-spacing: 0.03em;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* no background here: it would paint over the drifting layer behind the page */
+body { margin: 0; min-height: 100%; background: none; }
+
+/* ---------------------------------------------- top bar */
+
+#bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  background: linear-gradient(180deg, #171b21 0%, #0b0d10 100%);
+  border-bottom: 1px solid var(--edge);
+}
+
+#who {
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+#clock {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+#clock.task { color: var(--amber); }
+#clock.urgent { color: var(--red); animation: pulse 1s steps(2, end) infinite; }
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+body.bare #bar { display: none; }
+
+/* ---------------------------------------------- layout */
+
+#stage {
+  padding: 84px 16px calc(env(safe-area-inset-bottom) + 28px);
+  max-width: 560px;
+  margin: 0 auto;
+}
+body.bare #stage { padding-top: calc(env(safe-area-inset-top) + 40px); }
+
+h1 {
+  /* OPTI-MOLE is nine characters: at a fixed 40px it wraps at the hyphen on a
+     phone, so it scales with the screen and is never allowed to break. */
+  font-size: clamp(24px, 9vw, 40px);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;          /* balances the trailing letter-space so it centres */
+  white-space: nowrap;
+  margin: 0 0 4px;
+  font-weight: 400;
+  text-align: center;
+  background: linear-gradient(180deg, #fff 0%, #9aa0a8 48%, #e8eaed 52%, #6d737b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* the name: same bold round face and colours as the laptop */
+@font-face {
+  font-family: "Baloo";
+  src: local("Baloo"), url("baloo.ttf") format("truetype");
+  font-display: swap;
+}
+
+h1.brand {
+  font-family: "Baloo", "Arial Rounded MT Bold", var(--face);
+  font-weight: normal;
+  font-size: clamp(34px, 13vw, 60px);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-indent: 0.04em;
+  background: none;
+  color: inherit;
+}
+
+h1.brand .opti,
+h1.brand .mole {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+h1.brand .opti {
+  background-image: linear-gradient(180deg, #ffffff 0%, #b9bec5 46%, #eceef1 54%, #767c84 100%);
+}
+h1.brand .mole {
+  background-image: linear-gradient(180deg, #e3b58a 0%, #a8744b 46%, #c28d5e 54%, #6f4a2d 100%);
+}
+
+.sub {
+  text-align: center;
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 10px;
+}
+
+.task {
+  font-size: 27px;
+  line-height: 1.28;
+  color: #fff;
+  margin-bottom: 18px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 20px 18px;
+  margin-bottom: 14px;
+}
+
+.big { font-size: 22px; color: #fff; }
+.spot { font-size: 24px; color: var(--amber); line-height: 1.3; }
+.dim { color: var(--dim); }
+.small { font-size: 13px; }
+.center { text-align: center; }
+.byline { color: var(--dim); font-size: 13px; font-style: italic; }
+.hr { height: 1px; background: var(--edge); margin: 20px 0; }
+
+.rowsplit { display: flex; gap: 12px; }
+.rowsplit > * { flex: 1; }
+
+/* ---------------------------------------------- controls */
+
+button {
+  display: block;
+  width: 100%;
+  font-family: var(--face);
+  font-size: 17px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--silver);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  padding: 20px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+button:active { background: #1d222a; }
+button.primary { border-color: var(--amber); color: var(--amber); }
+button.primary:active { background: var(--amber); color: #14100a; }
+button.go { font-size: 22px; padding: 30px 16px; letter-spacing: 0.26em; }
+button.bad { border-color: #4a2c2a; color: #a5504a; }
+button:disabled { opacity: 0.32; }
+
+input[type="text"], input[type="tel"], textarea {
+  width: 100%;
+  font-family: var(--face);
+  font-size: 17px;
+  background: #05070a;
+  color: var(--silver);
+  border: 1px solid var(--edge);
+  padding: 16px 14px;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--amber); }
+
+#code {
+  font-family: var(--mono);
+  font-size: 52px;
+  text-align: center;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;      /* keeps the digits optically centred */
+  padding: 22px 0;
+}
+
+label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 18px 0 6px;
+}
+
+.shot {
+  width: 100%;
+  border: 1px solid var(--edge);
+  display: block;
+  margin-bottom: 14px;
+}
+
+.err { color: var(--red); font-size: 14px; min-height: 20px; margin-top: 10px; text-align: center; }
+.ok { color: var(--good); }
+
+.teamtag {
+  display: inline-block;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 4px 12px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.score { font-family: var(--mono); font-size: 34px; }
+
+/* ---------------------------------------------- the background
+   The same drifting disc sheen as the laptop, dimmer: a phone is held close,
+   and this screen is read in a hurry in a dark hallway. */
+
+.bg {
+  position: fixed;
+  inset: -30%;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.75;
+  transition: filter 3s ease, opacity 3s ease;
+}
+.bg i {
+  position: absolute;
+  display: block;
+  width: 86%;
+  height: 54%;
+  border-radius: 50%;
+  will-change: transform;
+}
+.bg .c1 {
+  left: -14%; top: -4%;
+  background: radial-gradient(closest-side, rgba(196,126,66,0.78), rgba(196,126,66,0) 72%);
+  animation: bg-drift-1 78s ease-in-out infinite alternate;
+}
+.bg .c2 {
+  right: -18%; top: 26%;
+  background: radial-gradient(closest-side, rgba(132,72,158,0.70), rgba(132,72,158,0) 72%);
+  animation: bg-drift-2 101s ease-in-out infinite alternate;
+}
+.bg .c3 {
+  left: 4%; bottom: -12%;
+  background: radial-gradient(closest-side, rgba(52,132,112,0.62), rgba(52,132,112,0) 72%);
+  animation: bg-drift-3 124s ease-in-out infinite alternate;
+}
+.bg .sheen {
+  left: -60%; top: -30%;
+  width: 220%; height: 160%;
+  border-radius: 0;
+  background: linear-gradient(74deg,
+    rgba(255,255,255,0) 42%, rgba(226,205,178,0.05) 50%, rgba(255,255,255,0) 58%);
+  animation: bg-sheen 52s linear infinite;
+}
+body::after {            /* vignette over it, so text stays readable */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 35%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.62) 100%);
+}
+
+@keyframes bg-drift-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(10%, 6%, 0) scale(1.16); }
+}
+@keyframes bg-drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-12%, 8%, 0) scale(0.92); }
+}
+@keyframes bg-drift-3 {
+  from { transform: translate3d(0, 0, 0) scale(0.94); }
+  to   { transform: translate3d(9%, -7%, 0) scale(1.2); }
+}
+@keyframes bg-sheen {
+  from { transform: translate3d(-20%, 0, 0); }
+  to   { transform: translate3d(20%, 0, 0); }
+}
+
+/* your team's own turn warms the screen; being scratched cools it */
+body[data-phase="play"] .bg { filter: saturate(0.85); }
+body[data-mine="1"] .bg { filter: hue-rotate(-14deg) saturate(1.15); opacity: 0.95; }
+body[data-slowed="1"] .bg { filter: hue-rotate(-52deg) saturate(1.2); opacity: 0.9; }
+
+/* ---------------------------------------------- shape and motion */
+
+button {
+  border-radius: 12px;
+  transition: background 140ms ease, border-color 140ms ease,
+              color 140ms ease, transform 110ms ease;
+}
+button:active { transform: scale(0.975); }      /* a press you can feel */
+button.go, button.primary { border-radius: 999px; }
+
+input[type="text"], input[type="tel"], textarea {
+  border-radius: 12px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+input:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(216,161,58,0.12); }
+#code { border-radius: 14px; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+/* only when the screen actually changes, never on a routine refresh */
+#stage.enter .panel, #stage.enter button.go, #stage.enter .shot {
+  animation: rise 360ms cubic-bezier(.2,.7,.25,1) both;
+}
+#stage.enter .panel:nth-of-type(2) { animation-delay: 60ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bg i, #stage.enter .panel, #stage.enter button.go, #stage.enter .shot {
+    animation: none !important;
+  }
+  * { transition-duration: 1ms !important; }
+}

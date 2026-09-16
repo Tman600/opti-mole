@@ -1,0 +1,6 @@
+# your discs, your photos, your tasks - the server recreates this folder
+data/
+
+# python
+__pycache__/
+*.pyc
